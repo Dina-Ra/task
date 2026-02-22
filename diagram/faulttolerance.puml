@@ -1,0 +1,37 @@
+@startuml
+actor "User/Client" as User
+participant "Cache Controller" as Ctrl
+participant "Redis Service" as RedisSrv
+database "Redis" as Redis
+database "PostgreSQL" as DB
+
+== Запрос данных (Redis OK) ==
+
+User -> Ctrl : GET /info
+Ctrl -> RedisSrv : getUserFromCache()
+RedisSrv -> Redis : GET keys
+Redis --> RedisSrv : Data Found
+RedisSrv --> Ctrl : UserResponse
+Ctrl --> User : 200 OK (Cache Hit)
+
+== Запрос данных (Redis DOWN) ==
+
+User -> Ctrl : GET /info
+Ctrl -> RedisSrv : getUserFromCache()
+RedisSrv -> Redis : Connection Attempt
+note right: Redis is Offline
+Redis --X RedisSrv : Error / Timeout
+
+RedisSrv --> Ctrl : return null (Fallback)
+Ctrl -> DB : Fetch from PostgreSQL
+DB --> Ctrl : Data Found
+
+alt Self-Healing
+    Ctrl -> RedisSrv : populateCacheAsync(data)
+    note right: Executes in @Async thread
+    RedisSrv -> Redis : Try to update (will fail silently)
+end
+
+Ctrl --> User : 200 OK (Data from DB)
+
+@enduml

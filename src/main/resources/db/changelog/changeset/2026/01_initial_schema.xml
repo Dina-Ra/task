@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create_schema" author="dinara">
+        <!-- Таблица Пользователей -->
+        <createTable tableName="users">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Таблица Типов подписок -->
+        <createTable tableName="subscription_types">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type_name" type="VARCHAR(20)">
+                <constraints nullable="false" unique="true" checkConstraint="type_name IN ('BASIC', 'PRO')" />
+            </column>
+            <column name="price" type="NUMERIC(19, 2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Таблица Подписок -->
+        <createTable tableName="subscriptions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_sub_user" referencedTableName="users" referencedColumnNames="id"/>
+            </column>
+            <column name="type_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_sub_type" referencedTableName="subscription_types" referencedColumnNames="id"/>
+            </column>
+            <column name="activation_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_billing_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Таблица Счетов -->
+        <createTable tableName="invoices">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subscription_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_inv_sub" referencedTableName="subscriptions" referencedColumnNames="id"/>
+            </column>
+            <column name="issued_at" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(19, 2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Таблица Outbox -->
+        <createTable tableName="outbox">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(50)" >
+                <constraints nullable="false" checkConstraint="event_type IN ('INVOICE_CREATED', 'SUBSCRIPTION_ACTIVATED', 'SUBSCRIPTION_DEACTIVATED')"/>
+            </column>
+            <column name="data" type="TEXT">
+                <constraints nullable="false" />
+            </column>
+            <column name="is_published" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="add-index-billing" author="dinara">
+        <createIndex tableName="subscriptions" indexName="idx_sub_active_date">
+            <column name="active"/>
+            <column name="next_billing_date"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

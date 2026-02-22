@@ -1,0 +1,39 @@
+@startuml
+actor "User/Client" as User
+participant "Subscription Controller" as SubCtrl
+participant "Subscription Service" as SubService
+database "PostgreSQL" as DB
+participant "Outbox Scheduler" as OutboxSched
+queue "RabbitMQ" as Rabbit
+participant "Cache Consumer" as CacheCons
+database "Redis" as Redis
+
+== Активация подписки ==
+
+User -> SubCtrl : POST /activate
+SubCtrl -> SubService : activate()
+activate SubService
+
+SubService -> DB : Save Subscription (Active)
+SubService -> DB : Save Invoice
+SubService -> DB : Save Outbox Event (is_published=false)
+
+SubService --> SubCtrl : Success 200 OK
+deactivate SubService
+SubCtrl --> User : Response
+
+== Гарантированная доставка (Outbox) ==
+
+loop every 1 minutes
+    OutboxSched -> DB : Fetch top 500 (is_published=false)
+    OutboxSched -> Rabbit : Publish Event
+    OutboxSched -> DB : Update Outbox (is_published=true)
+end
+
+== Обновление Кэша ==
+
+Rabbit -> CacheCons : Message Delivered
+CacheCons -> Redis : Update Hash (Subscription)
+CacheCons -> Redis : Add to ZSet (Invoices)
+
+@enduml

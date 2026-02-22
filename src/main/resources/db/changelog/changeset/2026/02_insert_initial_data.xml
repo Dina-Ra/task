@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="seed-subscription-types" author="dinara">
+        <insert tableName="subscription_types">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="type_name" value="BASIC"/>
+            <column name="price" value="100.00"/>
+        </insert>
+        <insert tableName="subscription_types">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="type_name" value="PRO"/>
+            <column name="price" value="200.00"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="seed-users" author="dinara">
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Ivan Ivanov"/>
+        </insert>
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Maria Petrova"/>
+        </insert>
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Dinara K"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
